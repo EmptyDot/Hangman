@@ -9,7 +9,6 @@ namespace Hangman;
 
 class Program
 {
-    
     public static void Main(string[] args)
     {
         const string fileName = "hangman_words.txt";
@@ -31,7 +30,6 @@ class Program
 
     private static WordGenerator CreateGenerator(string fileName)
     {
-        
         var wordsPath = Path.Combine(Environment.CurrentDirectory, fileName);
         return new WordGenerator(wordsPath);
     }
