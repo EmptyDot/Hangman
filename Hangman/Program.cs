@@ -12,15 +12,15 @@ class Program
     
     public static void Main(string[] args)
     {
-        string fileName = "hangman_words.txt";
-        string wordsPath = Path.Combine(Environment.CurrentDirectory, fileName);
-        WordGenerator generator = new WordGenerator(wordsPath);
+        const string fileName = "hangman_words.txt";
+        var generator = CreateGenerator(fileName);
         
         while (true)
         {
-            Game game = new Game();
-            string word = generator.GetWord();
-            game.Play(word); 
+            var word = generator.GetWord();
+            var game = new Game(word);
+            game.Play(); 
+            
             
             if (Ask("Play again?")) continue;
             break;
@@ -29,6 +29,12 @@ class Program
         
     }
 
+    private static WordGenerator CreateGenerator(string fileName)
+    {
+        
+        var wordsPath = Path.Combine(Environment.CurrentDirectory, fileName);
+        return new WordGenerator(wordsPath);
+    }
      private static bool Ask(string question)
     {
         
@@ -53,82 +59,87 @@ class Program
 
 class Game
 {
-
     private const int TotalAttempts = 6;
+    // Keeping a class variable because several methods need access to this 
+    private int _attemptsRemaining = TotalAttempts;
+    
     // does not allow duplicate values
     private readonly HashSet<char> _usedLetters = new ();
+    
+    private readonly string _word;
+
+    
+    public Game(string word)
+    {
+        _word = word;
+    }
     
     /// <summary>
     /// Updates the console with the game state each turn
     /// </summary>
-    private void Update(string word, int attemptsRemaining)
+    private void Update()
     {
         Console.Clear();
-        Picture.Draw(attemptsRemaining);
+        Picture.Draw(_attemptsRemaining);
         Console.WriteLine();
-        ShowWord(word);
+        ShowWord();
         ShowUsedLetters();
-        Console.WriteLine($"Attempts left: {attemptsRemaining}");
+        Console.WriteLine($"Attempts left: {_attemptsRemaining}");
         
     }
 
     /// <summary>
-    /// Main gameplay loop handler
+    /// Main gameplay loop handler. Will be called from Main
     /// </summary>
 
-    public void Play(string word)
+    public void Play()
     {
         
-        for (int i = TotalAttempts; i > 0; i--)
+        while (_attemptsRemaining > 0)
         {
-            while (true)
-            {
-                // Display current game state
-                Update(word, i);
-                
-                // Get input
-                var guessedString = GetInput();
-                
-                // Ensure input is valid
-                if (!IsValid(guessedString)) continue;
-                _usedLetters.Add(guessedString[0]);
-                
-                // Check if all letters in word has been guessed
-                if (word.All(letter => _usedLetters.Contains(letter)))
-                {
-                    // Show win message
-                    Update(word, i);
-                    Console.WriteLine("You win!");
-                    return;
-                }
-                // if guess not in word, decrement attempts remaining
-                if (word.All(letter => guessedString[0] != letter)) break;
-                
-            }
+            // Get guess
+            var guess = GetGuess();
+            // Add to used letters
+            _usedLetters.Add(guess);
+            
+            // if guess not in word, decrement attempts remaining
+            if (_word.All(letter => guess != letter)) _attemptsRemaining -= 1;
+            
+            // Check if all letters in word has been guessed
+            if (!_word.All(letter => _usedLetters.Contains(letter))) continue;
+            // Show win message
+            Update();
+            Console.WriteLine("You win!"); 
+            return;
+            
         }
         
         // Show lose message
-        Update(word, 0);
+        Update();
         Console.WriteLine("You lose!");
-        Console.WriteLine($"The word was: {word}");
-    }
-
-    void Win(string word, int attemptsRemaining)
-    {
-        Update(word, attemptsRemaining);
-        Console.WriteLine("You win!");
+        Console.WriteLine($"The word was: {_word}");
     }
     
+    char GetGuess()
+    {
+        string guessString;
+        do
+        {
+            // Display current game state
+            Update();
+
+            // Get input
+            guessString = GetInput();
+            // Check if valid else repeat
+        } while (!IsValid(guessString));
+
+        return guessString[0];
+    }
     string GetInput()
     {
         Console.Write("Guess a letter: ");
-        var guessedString = Console.ReadLine();
-        return EmptyIfNull(guessedString).ToUpper();
-    }
-    
-    private static string EmptyIfNull(string? guess)
-    {
-        return guess ?? "";
+        var guessedString = Console.ReadLine() ?? "";
+        return guessedString.ToUpper();
     }
     
     /// <summary>
@@ -150,9 +161,9 @@ class Game
     /// <summary>
     /// Used in Update(), shows the letters that the player guessed correctly and their position in the word
     /// </summary>
-    private void ShowWord(string word)
+    private void ShowWord()
     {
-        foreach (var letter in word) 
+        foreach (var letter in _word) 
             Console.Write(_usedLetters.Contains(letter) ? $"{letter} " : "_ "); 
         Console.WriteLine();
     }
