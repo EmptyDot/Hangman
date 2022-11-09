@@ -13,7 +13,7 @@ class Program
     {
         const string fileName = "hangman_words_temp.txt";
         var generator = CreateGenerator(fileName);
-        
+
         while (true)
         {
             var word = generator.GetWord();
@@ -24,6 +24,7 @@ class Program
 
 
         }
+    }
 
     private static WordGenerator CreateGenerator(string fileName)
     {
