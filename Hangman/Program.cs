@@ -11,22 +11,19 @@ class Program
 {
     public static void Main(string[] args)
     {
-        const string fileName = "hangman_words.txt";
+        const string fileName = "hangman_words_temp.txt";
         var generator = CreateGenerator(fileName);
         
         while (true)
         {
             var word = generator.GetWord();
             var game = new Game(word);
-            game.Play(); 
-            
-            
-            if (Ask("Play again?")) continue;
-            break;
+            game.Play();
+            Console.WriteLine("Play again? [y]es / [n]o");
+            bool keepPlaying;
+
+
         }
-        
-        
-    }
 
     private static WordGenerator CreateGenerator(string fileName)
     {
@@ -35,21 +32,20 @@ class Program
     }
      private static bool Ask(string question)
     {
-        
-        Console.WriteLine(question + " " + "[y]es / [n]o");
-        var answer = Console.ReadLine().ToLower();
-        switch (answer)
+        while (true)
         {
-            case "y" or "yes":
-                return true;
-            case "n" or "no":
-                return false;
-            default:
-                Console.WriteLine("Invalid input.");
-                return Ask(question);
-                
+            
+            var answer = Console.ReadLine().ToLower();
+            switch (answer)
+            {
+                case "y" or "yes":
+                    return true;
+                case "n" or "no":
+                    return false;
+                default:
+                    continue;
+            }
         }
-        
     }
 }
 
@@ -120,40 +116,48 @@ class Game
     
     char GetGuess()
     {
-        string guessString;
-        do
+        while (true)
         {
             // Display current game state
             Update();
-
+            
+            // Prompt user
+            Console.Write("Guess a letter: ");
             // Get input
-            guessString = GetInput();
-            // Check if valid else repeat
-        } while (!IsValid(guessString));
+            var guessChar = GetLetter();
+            Console.Write(guessChar);
+            if (_usedLetters.Contains(guessChar) || !Confirm()) continue;
+            
+            return guessChar;
+        } 
+    }
 
-        return guessString[0];
-    }
-    string GetInput()
+    private bool Confirm()
     {
-        Console.Write("Guess a letter: ");
-        var guessedString = Console.ReadLine() ?? "";
-        return guessedString.ToUpper();
+        while (true)
+        {
+            ConsoleKeyInfo confirmKey = Console.ReadKey(true);
+            switch (confirmKey.Key)
+            {
+                case (ConsoleKey.Enter):
+                    return true;
+                case (ConsoleKey.Backspace):
+                    return false;
+                default:
+                    continue;
+            }
+        }
     }
-    
-    /// <summary>
-    /// Will ensure that the input is valid 
-    /// </summary>
-    private bool IsValid(string input)
+
+    char GetLetter()
     {
-        if (input == "")
-            Console.WriteLine("Can't guess nothing! Press any key to try again...");
-        else if (_usedLetters.Contains(input[0]))
-            Console.WriteLine("Letter has already been used. Press any key to try again...");
-        else return true;
+        ConsoleKeyInfo guessedKey;
+        do
+        {
+            guessedKey = Console.ReadKey(true);
+        } while (!char.IsLetter(guessedKey.KeyChar));
         
-        Console.ReadKey();
-        return false;
-
+        return char.ToUpper(guessedKey.KeyChar);
     }
 
     /// <summary>
