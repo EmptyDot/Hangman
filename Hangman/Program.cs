@@ -13,17 +13,14 @@ class Program
     {
         const string fileName = "hangman_words_temp.txt";
         var generator = CreateGenerator(fileName);
-
-        while (true)
+        bool keepPlaying;
+        do
         {
             var word = generator.GetWord();
             var game = new Game(word);
             game.Play();
-            Console.WriteLine("Play again? [y]es / [n]o");
-            bool keepPlaying;
-
-
-        }
+            keepPlaying = game.KeepPlaying();
+        } while (keepPlaying);
     }
 
     private static WordGenerator CreateGenerator(string fileName)
@@ -31,26 +28,7 @@ class Program
         var wordsPath = Path.Combine(Environment.CurrentDirectory, fileName);
         return new WordGenerator(wordsPath);
     }
-     private static bool Ask(string question)
-    {
-        while (true)
-        {
-            
-            var answer = Console.ReadLine().ToLower();
-            switch (answer)
-            {
-                case "y" or "yes":
-                    return true;
-                case "n" or "no":
-                    return false;
-                default:
-                    continue;
-            }
-        }
-    }
 }
-
-
 
 class Game
 {
@@ -80,7 +58,6 @@ class Game
         ShowWord();
         ShowUsedLetters();
         Console.WriteLine($"Attempts left: {_attemptsRemaining}");
-        
     }
 
     /// <summary>
@@ -180,5 +157,24 @@ class Game
         foreach (var usedLetter in _usedLetters)
             Console.Write($"{usedLetter} ");
         Console.WriteLine();
+    }
+
+    public bool KeepPlaying()
+    {
+        while (true)
+        {
+            Update();
+            Console.WriteLine("Play again? [y]es / [n]o");
+            var answer = Console.ReadLine() ?? "";
+            switch (answer.ToLower())
+            {
+                case "y" or "yes":
+                    return true;
+                case "n" or "no":
+                    return false;
+                default:
+                    continue;
+            }
+        }
     }
 }
