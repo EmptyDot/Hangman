@@ -2,7 +2,8 @@
 
 // Using about 500 words from https://www.kaggle.com/datasets/rtatman/english-word-frequency
 // Processed using pandas
-// filter params: 5 <= word.Length <= 10 and count > 10^8
+// filter params: 5 <= word.Length <= 10, count > 10^8
+
 
 
 namespace Hangman;
@@ -11,8 +12,16 @@ class Program
 {
     public static void Main(string[] args)
     {
-        const string fileName = "hangman_words_temp.txt";
-        var generator = CreateGenerator(fileName);
+        // const string fileName = "hangman_words_temp.txt";
+        var path = ParseArgs(args);
+        if (path == "")
+        {
+            Console.WriteLine("Path not found");
+            return;
+        }
+        
+        var generator = new WordGenerator(path);
+        
         bool keepPlaying;
         do
         {
@@ -23,14 +32,27 @@ class Program
         } while (keepPlaying);
     }
 
-    private static WordGenerator CreateGenerator(string fileName)
+    
+
+    private static string ParseArgs(string[] args)
     {
-        var wordsPath = Path.Combine(Environment.CurrentDirectory, fileName);
-        return new WordGenerator(wordsPath);
+        string path;
+        if (args.Length == 0)
+        {
+            Console.WriteLine("Input the path to the hangman_words.txt");
+            path = Console.ReadLine() ?? "";
+        }
+        else
+        {
+            path = args[0];
+        }
+
+        return File.Exists(path) ? path : "";
     }
+    
 }
 
-class Game
+internal class Game
 {
     private const int TotalAttempts = 6;
     // Keeping a class variable because several methods need access to this 
@@ -61,7 +83,7 @@ class Game
     }
 
     /// <summary>
-    /// Main gameplay loop handler. Will be called from Main
+    /// Main gameplay loop handler. Will be called from Main()
     /// </summary>
 
     public void Play()
@@ -77,22 +99,12 @@ class Game
             // if guess not in word, decrement attempts remaining
             if (_word.All(letter => guess != letter)) _attemptsRemaining -= 1;
             
-            // Check if all letters in word has been guessed
-            if (!_word.All(letter => _usedLetters.Contains(letter))) continue;
-            // Show win message
-            Update();
-            Console.WriteLine("You win!"); 
-            return;
-            
+            // if all letters in word has been guessed, return
+            if (_word.All(letter => _usedLetters.Contains(letter))) return;
         }
-        
-        // Show lose message
-        Update();
-        Console.WriteLine("You lose!");
-        Console.WriteLine($"The word was: {_word}");
     }
     
-    char GetGuess()
+    private char GetGuess()
     {
         while (true)
         {
@@ -110,11 +122,11 @@ class Game
         } 
     }
 
-    private bool Confirm()
+    private static bool Confirm()
     {
         while (true)
         {
-            ConsoleKeyInfo confirmKey = Console.ReadKey(true);
+            var confirmKey = Console.ReadKey(true);
             switch (confirmKey.Key)
             {
                 case (ConsoleKey.Enter):
@@ -127,7 +139,7 @@ class Game
         }
     }
 
-    char GetLetter()
+    private static char GetLetter()
     {
         ConsoleKeyInfo guessedKey;
         do
@@ -151,7 +163,7 @@ class Game
     /// <summary>
     /// Used in Update(), shows the letters that the player has guessed so far
     /// </summary>
-    void ShowUsedLetters()
+    private void ShowUsedLetters()
     {
         Console.Write("Used letters: ");
         foreach (var usedLetter in _usedLetters)
@@ -164,6 +176,15 @@ class Game
         while (true)
         {
             Update();
+            if (_attemptsRemaining == 0)
+            {
+                Console.WriteLine("You lose!");
+                Console.WriteLine($"The word was: {_word}");
+            }
+            else
+            {
+                Console.WriteLine("You win!"); 
+            }
             Console.WriteLine("Play again? [y]es / [n]o");
             var answer = Console.ReadLine() ?? "";
             switch (answer.ToLower())

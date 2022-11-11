@@ -8,15 +8,6 @@ public class WordGenerator
     public WordGenerator(string path)
     {
         _path = path;
-        try
-        {
-            File.ReadLines(path);
-        }
-        catch (FileNotFoundException e)
-        {
-            Console.WriteLine($"File not found at path\n{path}.");
-            throw;
-        }
     }
 
     private int CountLines()
