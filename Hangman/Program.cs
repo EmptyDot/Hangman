@@ -12,14 +12,13 @@ class Program
 {
     public static void Main(string[] args)
     {
-        // const string fileName = "hangman_words_temp.txt";
+        // Check for words in cwd
         var path = ParseArgs(args);
         if (path == "")
         {
             Console.WriteLine("Path not found");
             return;
         }
-        
         var generator = new WordGenerator(path);
         
         bool keepPlaying;
@@ -36,11 +35,11 @@ class Program
 
     private static string ParseArgs(string[] args)
     {
-        string path;
+        string? path;
         if (args.Length == 0)
         {
             Console.WriteLine("Input the path to the hangman_words.txt");
-            path = Console.ReadLine() ?? "";
+            path = Console.ReadLine();
         }
         else
         {
