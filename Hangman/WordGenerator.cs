@@ -1,4 +1,6 @@
-﻿namespace Hangman;
+﻿using System.Data.Common;
+
+namespace Hangman;
 
 public class WordGenerator
 {
@@ -10,16 +12,10 @@ public class WordGenerator
         _path = path;
     }
 
-    private int CountLines()
-    {
-        return File.ReadLines(_path).Count();
-    }
-
     public string GetWord()
     {
-        
         var file = File.ReadAllLines(_path);
-        var word = file[_rand.Next(0, CountLines())];
+        var word = file[_rand.Next(0, File.ReadLines(_path).Count())];
         return word.Trim().ToUpper();
     }
 }

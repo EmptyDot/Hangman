@@ -12,13 +12,15 @@ class Program
 {
     public static void Main(string[] args)
     {
-        // Check for words in cwd
-        var path = ParseArgs(args);
+        
+        
+        var path = GetPath(args);
         if (path == "")
         {
             Console.WriteLine("Path not found");
             return;
         }
+        
         var generator = new WordGenerator(path);
         
         bool keepPlaying;
@@ -33,17 +35,25 @@ class Program
 
     
 
-    private static string ParseArgs(string[] args)
+    private static string GetPath(string[] args)
     {
+
+        const string fileName = "hangman_words.txt";
         string? path;
-        if (args.Length == 0)
+        // If any args
+        if (args.Length >= 1)
         {
-            Console.WriteLine("Input the path to the hangman_words.txt");
-            path = Console.ReadLine();
+            // Take the first one
+            path = args[0];
         }
         else
         {
-            path = args[0];
+            // Check for file in cwd
+            path = Path.Combine(Environment.CurrentDirectory, fileName);
+            if (File.Exists(path)) return path;
+            // Else prompt user
+            Console.WriteLine($"Input the path to {fileName}");
+            path = Console.ReadLine();
         }
 
         return File.Exists(path) ? path : "";
@@ -53,19 +63,17 @@ class Program
 
 internal class Game
 {
-    private const int TotalAttempts = 6;
-    // Keeping a class variable because several methods need access to this 
-    private int _attemptsRemaining = TotalAttempts;
-    
+    private int AttemptsRemaining { get; set; }
+    private string Word { get; }
+
     // does not allow duplicate values
     private readonly HashSet<char> _usedLetters = new ();
-    
-    private readonly string _word;
 
-    
+
     public Game(string word)
     {
-        _word = word;
+        AttemptsRemaining = 6;
+        Word = word;
     }
     
     /// <summary>
@@ -74,11 +82,11 @@ internal class Game
     private void Update()
     {
         Console.Clear();
-        Picture.Draw(_attemptsRemaining);
+        Picture.Draw(AttemptsRemaining);
         Console.WriteLine();
         ShowWord();
         ShowUsedLetters();
-        Console.WriteLine($"Attempts left: {_attemptsRemaining}");
+        Console.WriteLine($"Attempts left: {AttemptsRemaining}");
     }
 
     /// <summary>
@@ -88,7 +96,7 @@ internal class Game
     public void Play()
     {
         
-        while (_attemptsRemaining > 0)
+        while (AttemptsRemaining > 0)
         {
             // Get guess
             var guess = GetGuess();
@@ -96,10 +104,10 @@ internal class Game
             _usedLetters.Add(guess);
             
             // if guess not in word, decrement attempts remaining
-            if (_word.All(letter => guess != letter)) _attemptsRemaining -= 1;
+            if (Word.All(letter => guess != letter)) AttemptsRemaining -= 1;
             
             // if all letters in word has been guessed, return
-            if (_word.All(letter => _usedLetters.Contains(letter))) return;
+            if (Word.All(letter => _usedLetters.Contains(letter))) return;
         }
     }
     
@@ -154,7 +162,7 @@ internal class Game
     /// </summary>
     private void ShowWord()
     {
-        foreach (var letter in _word) 
+        foreach (var letter in Word) 
             Console.Write(_usedLetters.Contains(letter) ? $"{letter} " : "_ "); 
         Console.WriteLine();
     }
@@ -175,10 +183,10 @@ internal class Game
         while (true)
         {
             Update();
-            if (_attemptsRemaining == 0)
+            if (AttemptsRemaining == 0)
             {
                 Console.WriteLine("You lose!");
-                Console.WriteLine($"The word was: {_word}");
+                Console.WriteLine($"The word was: {Word}");
             }
             else
             {
